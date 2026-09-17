@@ -1,0 +1,63 @@
+{
+  "name": "media-sync",
+  "version": "1.0.0",
+  "description": "Background Media Sync & Player",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "author": "Sujoy Giri",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "cors": "^2.8.6",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.9",
+    "express": "^4.22.3",
+    "googleapis": "^126.0.1",
+    "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "electron": "^26.6.10",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.zvault.media",
+    "productName": "Z-Vault Media",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "index.html",
+      "main.js",
+      "preload.js",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "YOUR_GITHUB_USERNAME",
+      "repo": "YOUR_REPO_NAME"
+    }
+  }
+}

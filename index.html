@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Sync</title>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-base: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-sidebar: #020617;
+            --bg-hover: #334155;
+            --border: #334155;
+            --border-light: #475569;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-darker: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #34d399;
+            --overlay: rgba(0, 0, 0, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            font-family: inherit;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.4s ease-out forwards;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-panel);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-darker);
+        }
+
+        /* Banners */
+        .system-banner {
+            text-align: center;
+            padding: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 50;
+            color: white;
+        }
+
+        .bg-danger {
+            background-color: var(--danger);
+        }
+
+        .bg-warning {
+            background-color: var(--warning);
+            color: #000;
+        }
+
+        /* Login */
+        .view-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background-color: var(--bg-panel);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-icon {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px auto;
+            font-size: 36px;
+        }
+
+        .login-card h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .btn-google {
+            width: 100%;
+            background: white;
+            color: #0f172a;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+
+        .btn-google:hover:not(:disabled) {
+            background: #f8fafc;
+        }
+
+        .login-status {
+            font-size: 13px;
+            color: var(--text-darker);
+            margin-top: 16px;
+            min-height: 40px;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            flex: 1;
+            display: flex;
+            height: 100%;
+            transition: padding-bottom 0.3s;
+        }
+
+        .dashboard.player-active {
+            padding-bottom: 90px;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-header i {
+            color: var(--primary);
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-darker);
+            text-transform: uppercase;
+            padding: 8px 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: rgba(37, 99, 235, 0.1);
+            color: #60a5fa;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .folder-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            color: var(--text-muted);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .folder-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .folder-item.active {
+            background: rgba(37, 99, 235, 0.15);
+            color: #60a5fa;
+            font-weight: 500;
+        }
+
+        #sidebar-folders {
+            margin-left: 12px;
+            margin-top: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* User Profile & Sync */
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+        }
+
+        .sync-area {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sync-status {
+            font-size: 13px;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .btn-settings {
+            width: 100%;
+            background: var(--bg-panel);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .user-widget {
+            padding: 16px;
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .user-info-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-email {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .btn-change-account {
+            font-size: 11px;
+            color: var(--primary);
+            background: none;
+            text-decoration: underline;
+        }
+
+        .storage-bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .storage-track {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-panel);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .storage-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.5s;
+        }
+
+        /* Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            height: 64px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-icon {
+            background: none;
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .btn-icon:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: var(--bg-panel);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Grid */
+        .scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
+        }
+
+        .media-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .media-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .media-thumb {
+            height: 128px;
+            background: var(--bg-sidebar);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .media-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.6;
+        }
+
+        .media-thumb i.type-icon {
+            font-size: 40px;
+            opacity: 0.5;
+        }
+
+        .media-play-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .media-play-overlay i {
+            font-size: 40px;
+            color: white;
+        }
+
+        .media-card:hover .media-play-overlay,
+        .media-card:hover .btn-delete-card {
+            opacity: 1;
+        }
+
+        .btn-delete-card {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--text-main);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .btn-delete-card:hover {
+            background: var(--danger);
+        }
+
+        .media-info h3 {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .metadata-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-darker);
+            margin-top: 4px;
+        }
+
+        .grid-msg {
+            grid-column: 1 / -1;
+            color: var(--text-darker);
+            font-style: italic;
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .watch-list {
+            max-height: 160px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .watch-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-panel);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .btn-dashed {
+            width: 100%;
+            border: 1px dashed var(--border-light);
+            background: transparent;
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Player Bar */
+        .player-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 90px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .player-bar.active {
+            transform: translateY(0);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 30%;
+        }
+
+        .player-thumb {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            background: var(--bg-sidebar);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .player-thumb img,
+        .player-thumb video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .player-details h4 {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .player-details p {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .player-controls {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 500px;
+        }
+
+        .controls-main {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .btn-ctrl {
+            background: none;
+            color: white;
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .btn-ctrl:hover {
+            opacity: 1;
+        }
+
+        .btn-play {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .player-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 16px;
+            width: 30%;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .volume-value {
+            font-size: 11px;
+            width: 32px;
+            color: var(--text-main);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: var(--border-light);
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: white;
+            margin-top: -4px;
+        }
+
+        .progress-slider {
+            flex: 1;
+        }
+
+        .volume-slider {
+            width: 80px;
+        }
+
+        .volume-slider.boosted::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, var(--border-light) 33%, var(--warning) 100%);
+        }
+
+        .video-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            max-width: 1024px;
+            background: black;
+            border-radius: 12px;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Banners -->
+    <div id="offline-banner" class="system-banner bg-danger hidden"><i
+            class="fa-solid fa-wifi-slash"></i> No Internet Connection. Sign-in
+        and Sync disabled.</div>
+    <div id="storage-banner" class="system-banner bg-warning hidden"><i
+            class="fa-solid fa-triangle-exclamation"></i> Storage >90% full.
+        Please change your account to avoid errors.</div>
+
+    <!-- Login View -->
+    <div id="login-view" class="view-container animate-fade-in">
+        <div class="login-card animate-slide-up">
+            <div class="login-icon"><i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h1>Media Sync</h1>
+            <p>Securely sync and play media directly from Google Drive.</p>
+            <button id="btn-login" class="btn-google"><img
+                    src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg">
+                Sign in with Google</button>
+            <div id="login-status" class="login-status"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="main-view" class="dashboard hidden animate-fade-in">
+        <aside class="sidebar">
+            <div class="sidebar-header"><i class="fa-solid fa-media"></i>
+                Media Sync</div>
+            <nav class="nav-menu">
+                <div class="nav-label">Drive Locations</div>
+                <div class="nav-item"
+                    style="background:transparent; color:var(--text-main);">
+                    <i class="fa-regular fa-folder-open text-blue-500"></i>
+                    /media
+                </div>
+                <!-- Sub-folders will be injected here -->
+                <div id="sidebar-folders"></div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sync-area">
+                    <p
+                        style="font-size:11px; color:var(--text-darker); text-transform:uppercase; margin-bottom:6px; font-weight:600;">
+                        Auto-Sync Queue</p>
+                    <div id="sync-status-text" class="sync-status"><i
+                            class="fa-solid fa-circle-check"></i> Idle</div>
+                    <button id="btn-settings" class="btn-settings"><i
+                            class="fa-solid fa-gear"></i> Watch Folders</button>
+                </div>
+                <div class="user-widget">
+                    <div class="user-profile">
+                        <div class="user-info-group">
+                            <img id="user-avatar"
+                                src="https://ui-avatars.com/api/?name=User&background=334155&color=fff"
+                                class="user-avatar">
+                            <div>
+                                <div id="user-name" class="user-name">Loading...
+                                </div>
+                                <div id="user-email" class="user-email">...
+                                </div>
+                            </div>
+                        </div>
+                        <button id="btn-change-account"
+                            class="btn-change-account">Change</button>
+                    </div>
+                    <div>
+                        <div class="storage-bar-header">
+                            <span>Storage</span><span id="storage-text">0 /
+                                0</span>
+                        </div>
+                        <div class="storage-track">
+                            <div id="storage-fill" class="storage-fill"
+                                style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="header">
+                <h1>Media Files</h1>
+                <div class="header-actions">
+                    <button id="btn-refresh" class="btn-icon"><i
+                            class="fa-solid fa-rotate-right"></i></button>
+                    <button id="btn-create-folder" class="btn-secondary"><i
+                            class="fa-solid fa-folder-plus"></i> New
+                        Folder</button>
+                    <button id="btn-upload" class="btn-primary"><i
+                            class="fa-solid fa-cloud-arrow-up"></i>
+                        Upload</button>
+                </div>
+            </header>
+            <div class="scroll-area">
+                <div id="media-grid" class="media-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings" class="modal-overlay hidden">
+        <div class="modal-box animate-slide-up">
+            <div class="modal-header">
+                <h3>Watch Folders</h3>
+                <button id="btn-close-settings" class="btn-icon"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p
+                    style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+                    Files added to these folders upload automatically to a
+                    sub-folder in Drive.</p>
+                <div id="watch-folders-list" class="watch-list"></div>
+                <button id="btn-add-folder" class="btn-dashed"><i
+                        class="fa-solid fa-plus"></i> Add Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Player -->
+    <div id="player-bar" class="player-bar">
+        <div class="player-info">
+            <div class="player-thumb" id="player-thumb-container"></div>
+            <div class="player-details">
+                <h4 id="player-title">No Media</h4>
+                <p id="player-type">-</p>
+            </div>
+        </div>
+        <div class="player-controls">
+            <div class="controls-main">
+                <button id="btn-skip-backward" class="btn-ctrl" title="-10s"><i
+                        class="fa-solid fa-backward-step"></i></button>
+                <button id="btn-play-pause" class="btn-play"><i
+                        class="fa-solid fa-play"></i></button>
+                <button id="btn-skip-forward" class="btn-ctrl" title="+10s"><i
+                        class="fa-solid fa-forward-step"></i></button>
+            </div>
+            <div class="controls-progress">
+                <span id="time-current">0:00</span>
+                <input type="range" id="progress-slider" class="progress-slider"
+                    value="0" min="0" max="100" step="0.1">
+                <span id="time-total">0:00</span>
+            </div>
+        </div>
+        <div class="player-actions">
+            <div class="volume-container">
+                <i class="fa-solid fa-volume-high" id="vol-icon"
+                    style="color:var(--text-muted)"></i>
+                <input type="range" id="volume-slider" class="volume-slider"
+                    value="100" min="0" max="300" title="Sound Booster">
+                <span id="volume-value" class="volume-value">100%</span>
+            </div>
+            <button id="btn-expand-video" class="btn-ctrl hidden"><i
+                    class="fa-solid fa-expand"></i></button>
+            <button id="btn-close-player" class="btn-ctrl"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <!-- Video Expanded Modal -->
+    <div id="modal-video" class="video-modal hidden">
+        <button id="btn-shrink-video" class="btn-icon"
+            style="position:absolute; top:24px; right:24px; color:white; font-size:24px;"><i
+                class="fa-solid fa-compress"></i></button>
+        <div class="video-wrapper animate-slide-up" id="video-wrapper-inner">
+        </div>
+    </div>
+
+    <script>
+        const UI = {
+            offlineBanner: document.getElementById('offline-banner'), storageBanner: document.getElementById('storage-banner'),
+            loginView: document.getElementById('login-view'), mainView: document.getElementById('main-view'), mediaGrid: document.getElementById('media-grid'),
+            btnLogin: document.getElementById('btn-login'), loginStatus: document.getElementById('login-status'),
+            btnRefresh: document.getElementById('btn-refresh'), btnCreateFolder: document.getElementById('btn-create-folder'), btnUpload: document.getElementById('btn-upload'),
+            syncStatusText: document.getElementById('sync-status-text'),
+            userName: document.getElementById('user-name'), userEmail: document.getElementById('user-email'), userAvatar: document.getElementById('user-avatar'), storageText: document.getElementById('storage-text'), storageFill: document.getElementById('storage-fill'), btnChangeAccount: document.getElementById('btn-change-account'),
+            btnSettings: document.getElementById('btn-settings'), modalSettings: document.getElementById('modal-settings'), btnCloseSettings: document.getElementById('btn-close-settings'), btnAddFolder: document.getElementById('btn-add-folder'), watchFoldersList: document.getElementById('watch-folders-list'),
+            playerBar: document.getElementById('player-bar'), playerThumb: document.getElementById('player-thumb-container'), playerTitle: document.getElementById('player-title'), playerType: document.getElementById('player-type'), btnPlayPause: document.getElementById('btn-play-pause'), btnSkipBackward: document.getElementById('btn-skip-backward'), btnSkipForward: document.getElementById('btn-skip-forward'), progressSlider: document.getElementById('progress-slider'), timeCurrent: document.getElementById('time-current'), timeTotal: document.getElementById('time-total'), volumeSlider: document.getElementById('volume-slider'), volumeValue: document.getElementById('volume-value'), volIcon: document.getElementById('vol-icon'), btnExpandVideo: document.getElementById('btn-expand-video'), btnClosePlayer: document.getElementById('btn-close-player'),
+            modalVideo: document.getElementById('modal-video'), videoWrapperInner: document.getElementById('video-wrapper-inner'), btnShrinkVideo: document.getElementById('btn-shrink-video')
+        };
+
+        let proxyPort = null;
+        let activeMedia = null;
+        let activeFolderId = null;
+        let activeId = null;
+        let audioCtx, gainNode, mediaSource;
+
+        if (window.api && window.api.onProxyPort) window.api.onProxyPort(port => proxyPort = port);
+
+        function formatBytes(b) { if (b === 0) return '0 B'; const k = 1024, s = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(b) / Math.log(k)); return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + s[i]; }
+        function formatTime(sec) { if (isNaN(sec)) return "0:00"; const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return `${m}:${s < 10 ? '0' : ''}${s}`; }
+        function getRelTime(t) { if (!t) return 'Never'; const d = Math.floor((Date.now() - t) / 1000), i = { d: 86400, hr: 3600, min: 60 }; for (const [u, s] of Object.entries(i)) { const v = Math.floor(d / s); if (v >= 1) return `${v} ${u} ago`; } return 'Just now'; }
+
+        // --- Network & Init ---
+        function checkNet() {
+            const on = navigator.onLine;
+            UI.offlineBanner.classList.toggle('hidden', on);
+            UI.btnLogin.disabled = !on; UI.btnUpload.disabled = !on; UI.btnCreateFolder.disabled = !on;
+        }
+        window.addEventListener('online', checkNet); window.addEventListener('offline', checkNet); checkNet();
+
+        async function init() {
+            if (!window.api) return;
+            if (await window.api.checkAuth()) {
+                UI.loginView.classList.add('hidden');
+                UI.mainView.classList.remove('hidden');
+                loadProfile();
+                loadFolders();
+            }
+        }
+
+        // --- Auth ---
+        UI.btnLogin.addEventListener('click', async () => {
+            if (!window.api) return;
+            UI.loginStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+            UI.btnLogin.disabled = true;
+
+            const t = setTimeout(() => {
+                UI.loginStatus.innerHTML = `<div style="margin-bottom:8px;">Taking longer than expected...</div><button id="btn-can" class="btn-secondary" style="margin:0 auto; padding:4px 12px; font-size:12px;">Cancel Polling</button>`;
+                document.getElementById('btn-can').onclick = async () => { await window.api.cancelLogin(); UI.loginStatus.innerText = 'Cancelled.'; UI.btnLogin.disabled = false; };
+            }, 8000);
+
+            try {
+                if ((await window.api.login()).success) { clearTimeout(t); UI.loginView.classList.add('hidden'); UI.mainView.classList.remove('hidden'); loadProfile(); loadFiles(); }
+            } catch (e) { clearTimeout(t); if (e.message !== 'CANCELLED') UI.loginStatus.innerText = 'Failed.'; UI.btnLogin.disabled = false; }
+        });
+
+        UI.btnChangeAccount.onclick = async () => { if (confirm('Logout?')) { await window.api.logout(); UI.mainView.classList.add('hidden'); UI.loginView.classList.remove('hidden'); UI.btnLogin.disabled = false; UI.loginStatus.innerText = ''; } };
+
+        async function loadFolders() {
+            if (!navigator.onLine || !window.api) return;
+            const folders = await window.api.getFolders();
+            const container = document.getElementById('sidebar-folders');
+            container.innerHTML = '';
+
+            if (folders.length === 0) {
+                container.innerHTML = '<div style="font-size:11px; color:var(--text-darker); padding:8px 12px;">No sub-folders yet.</div>';
+            } else {
+                folders.forEach(f => {
+                    const el = document.createElement('div');
+                    el.className = 'folder-item';
+                    if (activeFolderId === f.id) el.classList.add('active'); // Keep highlighted if active
+
+                    el.innerHTML = `<i class="fa-solid fa-folder"></i> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.name}</span>`;
+
+                    el.onclick = () => {
+                        document.querySelectorAll('.folder-item').forEach(n => n.classList.remove('active'));
+                        el.classList.add('active');
+                        activeFolderId = f.id;
+                        loadFiles(f.id); // Fetch files for this folder
+                    };
+                    container.appendChild(el);
+                });
+            }
+
+            // If no folder is selected yet, show the default message in the grid
+            if (!activeFolderId) {
+                UI.mediaGrid.innerHTML = `
+            <div class="grid-msg" style="display:flex; flex-direction:column; align-items:center;">
+                <i class="fa-solid fa-hand-pointer" style="font-size: 36px; margin-bottom: 12px; opacity:0.5"></i> 
+                Click on a folder in the sidebar to view files.
+            </div>`;
+            }
+        }
+
+        // --- Profile & Storage Warning ---
+        async function loadProfile() {
+            if (!navigator.onLine || !window.api) return;
+            const d = await window.api.getDriveInfo();
+            UI.userName.innerText = d.user.displayName; UI.userEmail.innerText = d.user.emailAddress; if (d.user.photoLink) UI.userAvatar.src = d.user.photoLink;
+            const u = Number(d.storageQuota.usage) || 0, lim = Number(d.storageQuota.limit) > 0 ? Number(d.storageQuota.limit) : u + 1073741824;
+            UI.storageText.innerText = `${formatBytes(u)} / ${formatBytes(lim)}`;
+            const p = Math.min((u / lim) * 100, 100); UI.storageFill.style.width = p + '%';
+
+            if (p > 90) { UI.storageFill.style.backgroundColor = 'var(--danger)'; UI.storageBanner.classList.remove('hidden'); }
+            else { UI.storageBanner.classList.add('hidden'); UI.storageFill.style.backgroundColor = p > 75 ? 'var(--warning)' : 'var(--primary)'; }
+        }
+
+        // --- File System ---
+        window.deleteFile = async (e, id, name) => {
+            e.stopPropagation();
+            if (confirm('Delete from Drive?')) {
+                await window.api.deleteFile({ fileId: id, fileName: name });
+                localStorage.removeItem(`pos_${id}`);
+                localStorage.removeItem(`ply_${id}`);
+                loadFiles();
+            }
+        };
+
+        async function loadFiles(folderId) {
+            if (!folderId || !navigator.onLine || !window.api) return;
+            UI.mediaGrid.innerHTML = '<div class="grid-msg"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+            const f = await window.api.getFiles(folderId); UI.mediaGrid.innerHTML = '';
+            if (!f.length) { UI.mediaGrid.innerHTML = '<div class="grid-msg">No media found.</div>'; return; }
+
+            f.forEach(i => {
+                const vid = i.mimeType.startsWith('video/'), ic = vid ? 'fa-video' : 'fa-music', col = vid ? '#818cf8' : '#f472b6';
+                const s = i.size ? formatBytes(i.size) : '0 B', up = new Date(i.createdTime).toLocaleDateString();
+                const lst = localStorage.getItem(`ply_${i.id}`), lStr = lst ? getRelTime(parseInt(lst)) : 'Never';
+
+                const c = document.createElement('div'); c.className = 'media-card animate-fade-in'; c.onclick = () => playMedia(i.id, i.name, vid);
+                const safeName = encodeURIComponent(i.name);
+                c.innerHTML = `
+                    <button class="btn-delete-card" onclick="deleteFile(event, '${i.id}', decodeURIComponent('${safeName}'))"><i class="fa-solid fa-trash-can"></i></button>
+                    <div class="media-thumb">${i.thumbnailLink ? `<img src="${i.thumbnailLink}">` : `<i class="type-icon fa-solid ${ic}" style="color:${col}"></i>`}<div class="media-play-overlay"><i class="fa-solid fa-circle-play"></i></div></div>
+                    <div class="media-info"><h3 title="${i.name}">${i.name}</h3><div class="metadata-row"><span style="text-transform:uppercase;color:white">${i.mimeType.split('/')[1] || 'MEDIA'}</span><span>${s}</span></div><div class="metadata-row"><span>Up: ${up}</span><span>Play: ${lStr}</span></div></div>`;
+                UI.mediaGrid.appendChild(c);
+            });
+        }
+
+        // Refresh button refreshes the active folder, or the sidebar if none selected
+        UI.btnRefresh.onclick = () => {
+            loadFolders();
+            if (activeFolderId) loadFiles(activeFolderId);
+        };
+        UI.btnCreateFolder.onclick = async () => { const n = prompt('Folder Name:'); if (n && navigator.onLine) { await window.api.createSubFolder({ folderName: n }); loadFolders(); } };
+        UI.btnUpload.onclick = async () => { if (navigator.onLine) await window.api.uploadManual(); };
+
+        if (window.api && window.api.onSyncStatus) window.api.onSyncStatus(d => {
+            if (d.status === 'Idle') {
+                UI.syncStatusText.innerHTML = '<i class="fa-solid fa-circle-check"></i> Idle';
+                UI.syncStatusText.style.color = 'var(--success)';
+                loadFolders(); // Refresh sidebar in case auto-sync created a new folder
+                if (activeFolderId) loadFiles(activeFolderId); // Refresh visible files
+                loadProfile();
+            }
+            else {
+                UI.syncStatusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${d.status}${d.queueLength > 0 ? ` (${d.queueLength})` : ''}`;
+                UI.syncStatusText.style.color = 'var(--primary)';
+            }
+        });
+
+        // --- Settings / Auto Sync Folders ---
+        UI.btnSettings.onclick = async () => { await renderFolders(); UI.modalSettings.classList.remove('hidden'); };
+        UI.btnCloseSettings.onclick = () => UI.modalSettings.classList.add('hidden');
+        async function renderFolders() {
+            const f = await window.api.getWatchFolders(); UI.watchFoldersList.innerHTML = '';
+            if (!f.length) { UI.watchFoldersList.innerHTML = '<div style="font-size:12px; color:var(--text-muted)">No folders watched.</div>'; return; }
+            f.forEach(i => {
+                const d = document.createElement('div'); d.className = 'watch-item';
+                d.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap"><i class="fa-solid fa-folder" style="color:var(--primary); margin-right:8px"></i>...${i.slice(-30)}</span>`;
+                const btn = document.createElement('button'); btn.innerHTML = '<i class="fa-solid fa-trash-can"></i>'; btn.style.color = 'var(--danger)'; btn.style.background = 'none';
+                btn.onclick = async () => { await window.api.removeWatchFolder(i); renderFolders(); };
+                d.appendChild(btn); UI.watchFoldersList.appendChild(d);
+            });
+        }
+        UI.btnAddFolder.onclick = async () => { if (await window.api.addWatchFolder()) renderFolders(); };
+
+        // --- Media Player & Sound Booster ---
+        function initAudio(el) {
+            if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); gainNode = audioCtx.createGain(); gainNode.connect(audioCtx.destination); }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (mediaSource) mediaSource.disconnect();
+            el.crossOrigin = "anonymous"; mediaSource = audioCtx.createMediaElementSource(el); mediaSource.connect(gainNode);
+            gainNode.gain.value = UI.volumeSlider.value / 100;
+        }
+
+        function playMedia(id, name, vid) {
+            if (!proxyPort) { alert("Proxy not ready."); return; }
+            if (activeMedia) { activeMedia.pause(); activeMedia.removeAttribute('src'); }
+            activeId = id; UI.playerTitle.innerText = name; UI.playerType.innerText = vid ? 'Video' : 'Audio';
+
+            activeMedia = document.createElement(vid ? 'video' : 'audio');
+            if (vid) { UI.btnExpandVideo.classList.remove('hidden'); UI.playerThumb.innerHTML = ''; UI.playerThumb.appendChild(activeMedia); }
+            else { UI.btnExpandVideo.classList.add('hidden'); UI.playerThumb.innerHTML = '<i class="fa-solid fa-music text-2xl" style="color:var(--text-muted)"></i>'; }
+
+            activeMedia.src = `http://localhost:${proxyPort}/stream/${id}`;
+            initAudio(activeMedia); activeMedia.play();
+
+            const p = localStorage.getItem(`pos_${id}`); if (p) activeMedia.currentTime = parseFloat(p);
+            localStorage.setItem(`ply_${id}`, Date.now());
+
+            activeMedia.addEventListener('timeupdate', () => {
+                UI.timeCurrent.innerText = formatTime(activeMedia.currentTime);
+                if (activeMedia.duration) UI.progressSlider.value = (activeMedia.currentTime / activeMedia.duration) * 100;
+                if (Math.floor(activeMedia.currentTime) % 2 === 0) localStorage.setItem(`pos_${activeId}`, activeMedia.currentTime);
+            });
+            activeMedia.addEventListener('loadedmetadata', () => UI.timeTotal.innerText = formatTime(activeMedia.duration));
+            activeMedia.addEventListener('play', () => { UI.btnPlayPause.innerHTML = '<i class="fa-solid fa-pause"></i>'; localStorage.setItem(`ply_${activeId}`, Date.now()); });
+            activeMedia.addEventListener('pause', () => { UI.btnPlayPause.innerHTML = '<i class="fa-solid fa-play"></i>'; localStorage.setItem(`pos_${activeId}`, activeMedia.currentTime); });
+
+            UI.playerBar.classList.add('active'); UI.mainView.classList.add('player-active');
+        }
+
+        UI.btnPlayPause.onclick = () => activeMedia && (activeMedia.paused ? activeMedia.play() : activeMedia.pause());
+        UI.btnSkipBackward.onclick = () => activeMedia && (activeMedia.currentTime = Math.max(0, activeMedia.currentTime - 10));
+        UI.btnSkipForward.onclick = () => activeMedia && activeMedia.duration && (activeMedia.currentTime = Math.min(activeMedia.duration, activeMedia.currentTime + 10));
+        UI.progressSlider.oninput = e => activeMedia && activeMedia.duration && (activeMedia.currentTime = (e.target.value / 100) * activeMedia.duration);
+
+        UI.volumeSlider.oninput = e => {
+            const v = e.target.value; UI.volumeValue.innerText = `${v}%`;
+            if (v > 100) { UI.volumeSlider.classList.add('boosted'); UI.volIcon.className = "fa-solid fa-bullhorn text-warning"; }
+            else { UI.volumeSlider.classList.remove('boosted'); UI.volIcon.className = v == 0 ? "fa-solid fa-volume-xmark" : (v < 50 ? "fa-solid fa-volume-low" : "fa-solid fa-volume-high"); }
+            if (gainNode) gainNode.gain.value = v / 100;
+        };
+
+        UI.btnClosePlayer.onclick = () => { if (activeMedia) { localStorage.setItem(`pos_${activeId}`, activeMedia.currentTime); activeMedia.pause(); activeMedia.removeAttribute('src'); activeMedia = null; } UI.playerBar.classList.remove('active'); UI.mainView.classList.remove('player-active'); if (!UI.modalVideo.classList.contains('hidden')) UI.btnShrinkVideo.click(); };
+
+        UI.btnExpandVideo.onclick = () => { if (activeMedia && activeMedia.tagName === 'VIDEO') { UI.modalVideo.classList.remove('hidden'); activeMedia.controls = true; UI.videoWrapperInner.appendChild(activeMedia); } };
+        UI.btnShrinkVideo.onclick = () => { UI.modalVideo.classList.add('hidden'); if (activeMedia) { activeMedia.controls = false; UI.playerThumb.appendChild(activeMedia); } };
+
+        init();
+    </script>
+</body>
+
+</html>
