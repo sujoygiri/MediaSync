@@ -190,7 +190,7 @@ autoUpdater.on("update-downloaded", (info) => {
     .showMessageBox({
       type: "info",
       title: "Update Ready",
-      message: `Version ${info.version} of Z-Vault Media has been downloaded.`,
+      message: `Version ${info.version} of Media Sync has been downloaded.`,
       detail: "Restart the application to apply the updates.",
       buttons: ["Restart Now", "Later"],
     })
