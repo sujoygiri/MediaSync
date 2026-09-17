@@ -1,6 +1,6 @@
 {
   "name": "media-sync",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": "github:sujoygiri/MediaSync",
   "description": "Background Media Sync & Player",
   "main": "main.js",
