@@ -178,9 +178,29 @@ if (!gotTheLock) {
     createWindow();
     try {
       autoUpdater.checkForUpdatesAndNotify();
-    } catch (e) {}
+    } catch (e) {
+      console.error("Updater error:", e);
+    }
   });
 }
+
+// Listen for the completed download
+autoUpdater.on("update-downloaded", (info) => {
+  dialog
+    .showMessageBox({
+      type: "info",
+      title: "Update Ready",
+      message: `Version ${info.version} of Z-Vault Media has been downloaded.`,
+      detail: "Restart the application to apply the updates.",
+      buttons: ["Restart Now", "Later"],
+    })
+    .then((result) => {
+      if (result.response === 0) {
+        isQuitting = true; // bypasses the "hide to tray" logic
+        autoUpdater.quitAndInstall();
+      }
+    });
+});
 
 // --- Custom Fetch Wrapper with Auto-Refresh ---
 async function fetchWithAutoRefresh(url, options = {}) {
@@ -542,14 +562,16 @@ ipcMain.handle(
 ipcMain.handle("drive:delete-file", async (event, { fileId, fileName }) => {
   await fetchWithAutoRefresh(
     `https://www.googleapis.com/drive/v3/files/${fileId}`,
-    { method: "DELETE" }
+    { method: "DELETE" },
   );
 
   // Remove from upload_history so it can be re-uploaded in the future
   if (fileName) {
     let history = store.get("upload_history") || [];
     // Filter out any local paths that end with this file name
-    history = history.filter((filePath) => path.basename(filePath) !== fileName);
+    history = history.filter(
+      (filePath) => path.basename(filePath) !== fileName,
+    );
     store.set("upload_history", history);
   }
   return { success: true };
