@@ -22,7 +22,7 @@ const { autoUpdater } = require("electron-updater");
 // --- Configuration ---
 const APP_TOKEN =
   "9f7b4ee180d9749553211fb49b770e6893c10d2e54d44a765c2edc49a38edda0";
-const SERVER_URL = "https://zvaultoauthserver-production.up.railway.app";
+const SERVER_URL = "https://zvault-oauth-server.onrender.com";
 const store = new Store();
 
 // --- State ---
