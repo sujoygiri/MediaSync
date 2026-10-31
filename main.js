@@ -73,9 +73,21 @@ proxyApp.get("/stream/:fileId", async (req, res) => {
     nodeStream.pipe(res);
     nodeStream.on("error", (err) => console.error("Stream error:", err));
   } catch (error) {
+    await logError(error);
     if (!res.headersSent) res.status(500).send("Error streaming file");
   }
 });
+
+async function logError(error) {
+  try {
+    const format = `[${Date.now().toLocaleString()}] --------> \n${error}`;
+    await fs.promises.appendFile(
+      path.join(app.getPath("userData"), "error.log"),
+      format,
+    );
+  } catch (error) {
+  }
+}
 
 // --- Window & App Lifecycle ---
 function createWindow() {
@@ -93,7 +105,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile("index.html");
-  mainWindow.setMenu(null);
+  // mainWindow.setMenu(null);
 
   mainWindow.on("close", (event) => {
     if (!isQuitting) {
@@ -179,6 +191,7 @@ if (!gotTheLock) {
     try {
       autoUpdater.checkForUpdatesAndNotify();
     } catch (e) {
+      logError(e);
       console.error("Updater error:", e);
     }
   });
@@ -318,6 +331,7 @@ ipcMain.handle("auth:login", async () => {
       }, 2000);
     });
   } catch (error) {
+    await logError(error);
     throw new Error("Authentication failed");
   }
 });
