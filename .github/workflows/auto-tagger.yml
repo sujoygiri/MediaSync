@@ -1,0 +1,40 @@
+name: Auto Tag on package.json Update
+
+on:
+  push:
+    branches:
+      - main # Change this to 'master' if your default branch uses that name
+    paths:
+      - 'package.json'
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Grants permission to create and push tags
+      
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Get version from package.json
+        id: package_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
+
+      - name: Configure Git Bot
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+
+      - name: Create and Push Tag
+        run: |
+          # Only create the tag if it doesn't already exist to prevent loops/errors
+          if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            git tag $TAG_NAME
+            git push origin $TAG_NAME
+          else
+            echo "Tag $TAG_NAME already exists. Skipping."
+          fi
+
